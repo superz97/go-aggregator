@@ -1,0 +1,15 @@
+package main
+
+import (
+	"context"
+	"fmt"
+)
+
+func handlerAgg(s *state, cmd command) error {
+	feed, err := fetchFeed(context.Background(), "https://wagslane.dev/index.xml")
+	if err != nil {
+		return fmt.Errorf("failed to fetch feed: %w", err)
+	}
+	fmt.Printf("%+v\n", feed)
+	return nil
+}
