@@ -19,7 +19,8 @@ inner join feeds on feed_follows.feed_id = feeds.id
 where feed_follows.user_id = $1
 and (sqlc.narg('feed_name')::text is null or feeds.name = sqlc.narg('feed_name'))
 order by posts.published_at desc nulls last
-limit $2;
+limit $2
+offset $3;
 
 -- name: GetPostsForUserByPublishedAtAsc :many
 select posts.*
@@ -29,7 +30,8 @@ inner join feeds on feed_follows.feed_id = feeds.id
 where feed_follows.user_id = $1
 and (sqlc.narg('feed_name')::text is null or feeds.name = sqlc.narg('feed_name'))
 order by posts.published_at asc nulls last
-limit $2;
+limit $2
+offset $3;
 
 -- name: GetPostsForUserByTitleDesc :many
 select posts.*
@@ -39,7 +41,8 @@ inner join feeds on feed_follows.feed_id = feeds.id
 where feed_follows.user_id = $1
 and (sqlc.narg('feed_name')::text is null or feeds.name = sqlc.narg('feed_name'))
 order by posts.title desc
-limit $2;
+limit $2
+offset $3;
 
 -- name: GetPostsForUserByTitleAsc :many
 select posts.*
@@ -49,4 +52,5 @@ inner join feeds on feed_follows.feed_id = feeds.id
 where feed_follows.user_id = $1
 and (sqlc.narg('feed_name')::text is null or feeds.name = sqlc.narg('feed_name'))
 order by posts.title asc
-limit $2;
+limit $2
+offset $3;

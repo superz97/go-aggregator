@@ -13,6 +13,7 @@ func handlerBrowse(s *state, cmd command, user database.User) error {
 	fs := flag.NewFlagSet("browse", flag.ContinueOnError)
 
 	limit := fs.Int("limit", 2, "limit")
+	page := fs.Int("page", 1, "page")
 	sort := fs.String("sort", "published_at", "sort")
 	order := fs.String("order", "desc", "order")
 	feed := fs.String("feed", "", "")
@@ -20,6 +21,11 @@ func handlerBrowse(s *state, cmd command, user database.User) error {
 	if err := fs.Parse(cmd.args); err != nil {
 		return err
 	}
+
+	if *page < 1 {
+		return fmt.Errorf("invalid page %d", *page)
+	}
+	offset := (*page - 1) * *limit
 
 	switch *sort {
 	case "published_at", "title":
@@ -44,6 +50,8 @@ func handlerBrowse(s *state, cmd command, user database.User) error {
 	)
 
 	key := fmt.Sprintf("%s:%s", *sort, *order)
+	limit32 := int32(*limit)
+	offset32 := int32(offset)
 
 	switch key {
 	case "published_at:asc":
@@ -51,7 +59,8 @@ func handlerBrowse(s *state, cmd command, user database.User) error {
 			context.Background(),
 			database.GetPostsForUserByPublishedAtAscParams{
 				UserID:   user.ID,
-				Limit:    int32(*limit),
+				Limit:    limit32,
+				Offset:   offset32,
 				FeedName: feedName,
 			},
 		)
@@ -60,7 +69,8 @@ func handlerBrowse(s *state, cmd command, user database.User) error {
 			context.Background(),
 			database.GetPostsForUserByPublishedAtDescParams{
 				UserID:   user.ID,
-				Limit:    int32(*limit),
+				Limit:    limit32,
+				Offset:   offset32,
 				FeedName: feedName,
 			},
 		)
@@ -69,7 +79,8 @@ func handlerBrowse(s *state, cmd command, user database.User) error {
 			context.Background(),
 			database.GetPostsForUserByTitleAscParams{
 				UserID:   user.ID,
-				Limit:    int32(*limit),
+				Limit:    limit32,
+				Offset:   offset32,
 				FeedName: feedName,
 			},
 		)
@@ -78,7 +89,8 @@ func handlerBrowse(s *state, cmd command, user database.User) error {
 			context.Background(),
 			database.GetPostsForUserByTitleDescParams{
 				UserID:   user.ID,
-				Limit:    int32(*limit),
+				Limit:    limit32,
+				Offset:   offset32,
 				FeedName: feedName,
 			},
 		)

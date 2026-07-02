@@ -107,19 +107,26 @@ from posts
 inner join feed_follows on posts.feed_id = feed_follows.feed_id
 inner join feeds on feed_follows.feed_id = feeds.id
 where feed_follows.user_id = $1
-and ($3::text is null or feeds.name = $3)
+and ($4::text is null or feeds.name = $4)
 order by posts.published_at asc nulls last
 limit $2
+offset $3
 `
 
 type GetPostsForUserByPublishedAtAscParams struct {
 	UserID   uuid.UUID
 	Limit    int32
+	Offset   int32
 	FeedName sql.NullString
 }
 
 func (q *Queries) GetPostsForUserByPublishedAtAsc(ctx context.Context, arg GetPostsForUserByPublishedAtAscParams) ([]Post, error) {
-	rows, err := q.db.QueryContext(ctx, getPostsForUserByPublishedAtAsc, arg.UserID, arg.Limit, arg.FeedName)
+	rows, err := q.db.QueryContext(ctx, getPostsForUserByPublishedAtAsc,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+		arg.FeedName,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -156,19 +163,26 @@ from posts
 inner join feed_follows on posts.feed_id = feed_follows.feed_id
 inner join feeds on feed_follows.feed_id = feeds.id
 where feed_follows.user_id = $1
-and ($3::text is null or feeds.name = $3)
+and ($4::text is null or feeds.name = $4)
 order by posts.published_at desc nulls last
 limit $2
+offset $3
 `
 
 type GetPostsForUserByPublishedAtDescParams struct {
 	UserID   uuid.UUID
 	Limit    int32
+	Offset   int32
 	FeedName sql.NullString
 }
 
 func (q *Queries) GetPostsForUserByPublishedAtDesc(ctx context.Context, arg GetPostsForUserByPublishedAtDescParams) ([]Post, error) {
-	rows, err := q.db.QueryContext(ctx, getPostsForUserByPublishedAtDesc, arg.UserID, arg.Limit, arg.FeedName)
+	rows, err := q.db.QueryContext(ctx, getPostsForUserByPublishedAtDesc,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+		arg.FeedName,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -205,19 +219,26 @@ from posts
 inner join feed_follows on posts.feed_id = feed_follows.feed_id
 inner join feeds on feed_follows.feed_id = feeds.id
 where feed_follows.user_id = $1
-and ($3::text is null or feeds.name = $3)
+and ($4::text is null or feeds.name = $4)
 order by posts.title asc
 limit $2
+offset $3
 `
 
 type GetPostsForUserByTitleAscParams struct {
 	UserID   uuid.UUID
 	Limit    int32
+	Offset   int32
 	FeedName sql.NullString
 }
 
 func (q *Queries) GetPostsForUserByTitleAsc(ctx context.Context, arg GetPostsForUserByTitleAscParams) ([]Post, error) {
-	rows, err := q.db.QueryContext(ctx, getPostsForUserByTitleAsc, arg.UserID, arg.Limit, arg.FeedName)
+	rows, err := q.db.QueryContext(ctx, getPostsForUserByTitleAsc,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+		arg.FeedName,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -254,19 +275,26 @@ from posts
 inner join feed_follows on posts.feed_id = feed_follows.feed_id
 inner join feeds on feed_follows.feed_id = feeds.id
 where feed_follows.user_id = $1
-and ($3::text is null or feeds.name = $3)
+and ($4::text is null or feeds.name = $4)
 order by posts.title desc
 limit $2
+offset $3
 `
 
 type GetPostsForUserByTitleDescParams struct {
 	UserID   uuid.UUID
 	Limit    int32
+	Offset   int32
 	FeedName sql.NullString
 }
 
 func (q *Queries) GetPostsForUserByTitleDesc(ctx context.Context, arg GetPostsForUserByTitleDescParams) ([]Post, error) {
-	rows, err := q.db.QueryContext(ctx, getPostsForUserByTitleDesc, arg.UserID, arg.Limit, arg.FeedName)
+	rows, err := q.db.QueryContext(ctx, getPostsForUserByTitleDesc,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+		arg.FeedName,
+	)
 	if err != nil {
 		return nil, err
 	}
