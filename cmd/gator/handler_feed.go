@@ -53,6 +53,7 @@ func scrapeFeeds(s *state) error {
 			fmt.Println("error saving post:", err)
 			continue
 		}
+		fmt.Printf("Saved post: %s\n", item.Title)
 	}
 
 	return nil
