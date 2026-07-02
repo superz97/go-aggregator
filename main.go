@@ -1,11 +1,12 @@
 package main
 
 import (
-	"aggregator/internal/config"
-	"aggregator/internal/database"
 	"database/sql"
 	"fmt"
 	"os"
+
+	"github.com/superz97/go-aggregator/internal/config"
+	"github.com/superz97/go-aggregator/internal/database"
 
 	_ "github.com/lib/pq"
 )

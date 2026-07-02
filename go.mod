@@ -1,4 +1,4 @@
-module aggregator
+module github.com/superz97/go-aggregator
 
 go 1.26
 

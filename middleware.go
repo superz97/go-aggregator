@@ -1,9 +1,10 @@
 package main
 
 import (
-	"aggregator/internal/database"
 	"context"
 	"fmt"
+
+	"github.com/superz97/go-aggregator/internal/database"
 )
 
 func middlewareLoggedIn(handler func(s *state, cmd command, user database.User) error) func(*state, command) error {

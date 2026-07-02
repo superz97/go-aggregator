@@ -1,11 +1,12 @@
 package main
 
 import (
-	"aggregator/internal/database"
 	"context"
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/superz97/go-aggregator/internal/database"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
