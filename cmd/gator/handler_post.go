@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"strings"
 
 	"github.com/superz97/go-aggregator/internal/database"
 )
@@ -104,5 +105,53 @@ func handlerBrowse(s *state, cmd command, user database.User) error {
 		fmt.Printf("%s\n%s\n\n", post.Title, post.Url)
 	}
 
+	return nil
+}
+
+func handlerSearch(s *state, cmd command, user database.User) error {
+	fs := flag.NewFlagSet("search", flag.ContinueOnError)
+
+	limit := fs.Int("limit", 10, "limit")
+
+	var queryParts []string
+	remaining := cmd.args
+	for {
+		if err := fs.Parse(remaining); err != nil {
+			return err
+		}
+		args := fs.Args()
+		if len(args) == 0 {
+			break
+		}
+		queryParts = append(queryParts, args[0])
+		remaining = args[1:]
+	}
+
+	if len(queryParts) == 0 {
+		return fmt.Errorf("search requires a search query")
+	}
+
+	query := strings.Join(queryParts, " ")
+
+	posts, err := s.db.SearchPostsForUser(
+		context.Background(),
+		database.SearchPostsForUserParams{
+			UserID:     user.ID,
+			Similarity: query,
+			Limit:      int32(*limit),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("could not search posts: %w", err)
+	}
+
+	if len(posts) == 0 {
+		fmt.Println("no matching posts found")
+		return nil
+	}
+
+	for _, post := range posts {
+		fmt.Printf("%s\n%s\n\n", post.Title, post.Url)
+	}
 	return nil
 }

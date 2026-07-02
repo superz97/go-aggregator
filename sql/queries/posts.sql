@@ -54,3 +54,12 @@ and (sqlc.narg('feed_name')::text is null or feeds.name = sqlc.narg('feed_name')
 order by posts.title asc
 limit $2
 offset $3;
+
+-- name: SearchPostsForUser :many
+select posts.*
+from posts
+inner join feed_follows on posts.feed_id = feed_follows.feed_id
+where feed_follows.user_id = $1
+and similarity(posts.title, $2) > 0.1
+order by similarity(posts.title, $2) desc
+limit $3;

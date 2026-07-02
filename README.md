@@ -5,7 +5,7 @@ Gator is a CLI RSS feed aggregator — follow feeds, scrape them on a schedule, 
 ## Prerequisites
 
 - [Go](https://go.dev/doc/install) (1.26+)
-- [PostgreSQL](https://www.postgresql.org/download/) running locally or reachable over the network
+- [PostgreSQL](https://www.postgresql.org/download/) running locally or reachable over the network, with the `pg_trgm` extension available (ships with standard Postgres/`postgresql-contrib`; used for fuzzy `search`)
 
 ## Installation
 
@@ -49,10 +49,11 @@ Add a feed (this also auto-follows it):
 gator addfeed "Hacker News" https://news.ycombinator.com/rss
 ```
 
-Start the aggregator loop (runs forever, scrapes on an interval — Ctrl+C to stop):
+Start the aggregator loop (runs forever, scrapes on an interval — Ctrl+C to stop). It scrapes immediately on startup, then again every interval. An optional second argument controls how many feeds are fetched concurrently per tick (default `1`):
 
 ```bash
 gator agg 1m
+gator agg 1m 5
 ```
 
 Browse saved posts from feeds you follow. By default this shows the 2 most recent posts, but you can sort, filter, and page through results with flags:
@@ -62,11 +63,23 @@ gator browse
 gator browse --limit=10
 gator browse --sort=title --order=asc
 gator browse --feed="Hacker News" --limit=5
+gator browse --limit=10 --page=2
 ```
 
 - `--limit=<n>` — number of posts to show (default `2`)
+- `--page=<n>` — 1-indexed page of results to show (default `1`)
 - `--sort=published_at|title` — field to sort by (default `published_at`)
 - `--order=asc|desc` — sort direction (default `desc`)
 - `--feed=<name>` — only show posts from the given followed feed, matched by exact name
+
+Fuzzy search your saved posts by title (typo-tolerant, via Postgres `pg_trgm`):
+
+```bash
+gator search "murderd"
+gator search --limit=5 "counterclok"
+```
+
+- `--limit=<n>` — max number of results (default `10`)
+- Flags and the query can appear in any order; an unquoted multi-word query is joined with spaces.
 
 Other commands: `users`, `feeds`, `follow <url>`, `following`, `unfollow <url>`.

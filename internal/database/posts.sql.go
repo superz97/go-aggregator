@@ -324,3 +324,51 @@ func (q *Queries) GetPostsForUserByTitleDesc(ctx context.Context, arg GetPostsFo
 	}
 	return items, nil
 }
+
+const searchPostsForUser = `-- name: SearchPostsForUser :many
+select posts.id, posts.created_at, posts.updated_at, posts.title, posts.url, posts.description, posts.published_at, posts.feed_id
+from posts
+inner join feed_follows on posts.feed_id = feed_follows.feed_id
+where feed_follows.user_id = $1
+and similarity(posts.title, $2) > 0.1
+order by similarity(posts.title, $2) desc
+limit $3
+`
+
+type SearchPostsForUserParams struct {
+	UserID     uuid.UUID
+	Similarity string
+	Limit      int32
+}
+
+func (q *Queries) SearchPostsForUser(ctx context.Context, arg SearchPostsForUserParams) ([]Post, error) {
+	rows, err := q.db.QueryContext(ctx, searchPostsForUser, arg.UserID, arg.Similarity, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Post
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Title,
+			&i.Url,
+			&i.Description,
+			&i.PublishedAt,
+			&i.FeedID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
