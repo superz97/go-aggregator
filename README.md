@@ -55,11 +55,18 @@ Start the aggregator loop (runs forever, scrapes on an interval — Ctrl+C to st
 gator agg 1m
 ```
 
-Browse the most recent saved posts from feeds you follow:
+Browse saved posts from feeds you follow. By default this shows the 2 most recent posts, but you can sort, filter, and page through results with flags:
 
 ```bash
 gator browse
-gator browse 10
+gator browse --limit=10
+gator browse --sort=title --order=asc
+gator browse --feed="Hacker News" --limit=5
 ```
+
+- `--limit=<n>` — number of posts to show (default `2`)
+- `--sort=published_at|title` — field to sort by (default `published_at`)
+- `--order=asc|desc` — sort direction (default `desc`)
+- `--feed=<name>` — only show posts from the given followed feed, matched by exact name
 
 Other commands: `users`, `feeds`, `follow <url>`, `following`, `unfollow <url>`.
