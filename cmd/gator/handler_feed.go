@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
+	"sync"
 	"time"
 
 	"github.com/superz97/go-aggregator/internal/database"
@@ -12,12 +14,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func scrapeFeeds(s *state) error {
-	feed, err := s.db.GetNextFeedToFetch(context.Background())
-	if err != nil {
-		return fmt.Errorf("could not get next feed to fetch: %w", err)
-	}
-
+func scrapeFeed(s *state, feed database.Feed) error {
 	if err := s.db.MarkFeedFetched(context.Background(), feed.ID); err != nil {
 		return fmt.Errorf("could not mark feed fetched: %w", err)
 	}
@@ -59,9 +56,33 @@ func scrapeFeeds(s *state) error {
 	return nil
 }
 
+func scrapeFeeds(s *state, concurrency int) error {
+	feeds, err := s.db.GetNextFeedsToFetch(context.Background(), int32(concurrency))
+	if err != nil {
+		return fmt.Errorf("could not get feeds: %w", err)
+	}
+
+	var wg sync.WaitGroup
+
+	for _, feed := range feeds {
+		wg.Add(1)
+
+		go func(feed database.Feed) {
+			defer wg.Done()
+
+			if err := scrapeFeed(s, feed); err != nil {
+				fmt.Println(err)
+			}
+		}(feed)
+	}
+
+	wg.Wait()
+	return nil
+}
+
 func handlerAgg(s *state, cmd command) error {
-	if len(cmd.args) != 1 {
-		return fmt.Errorf("agg requires a single time_between_reqs argument, e.g. 1s, 1m, 1h")
+	if len(cmd.args) < 1 || len(cmd.args) > 2 {
+		return fmt.Errorf("agg requires a single time_between_reqs argument (e.g. 1s, 1m, 1h) and an optional concurrency argument")
 	}
 
 	timeBetweenRequests, err := time.ParseDuration(cmd.args[0])
@@ -69,11 +90,22 @@ func handlerAgg(s *state, cmd command) error {
 		return fmt.Errorf("invalid duration %q: %w", cmd.args[0], err)
 	}
 
+	concurrency := 1
+	if len(cmd.args) == 2 {
+		concurrency, err = strconv.Atoi(cmd.args[1])
+		if err != nil {
+			return fmt.Errorf("invalid concurrency %q: %w", cmd.args[1], err)
+		}
+		if concurrency < 1 {
+			return fmt.Errorf("invalid concurrency %d", concurrency)
+		}
+	}
+
 	fmt.Printf("Collecting feeds every %s\n", timeBetweenRequests)
 
 	ticker := time.NewTicker(timeBetweenRequests)
 	for ; ; <-ticker.C {
-		if err := scrapeFeeds(s); err != nil {
+		if err := scrapeFeeds(s, concurrency); err != nil {
 			fmt.Println("error scraping feeds: ", err)
 		}
 	}

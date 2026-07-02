@@ -40,7 +40,7 @@ update feeds
 set last_fetched_at = now(), updated_at = now()
 where id = $1;
 
--- name: GetNextFeedToFetch :one
+-- name: GetNextFeedsToFetch :many
 select * from feeds
 order by last_fetched_at nulls first
-limit 1;
+limit $1;
