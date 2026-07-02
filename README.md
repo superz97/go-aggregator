@@ -12,7 +12,7 @@ Gator is a CLI RSS feed aggregator — follow feeds, scrape them on a schedule, 
 Install the `gator` CLI with `go install`:
 
 ```bash
-go install github.com/superz97/go-aggregator@latest
+go install github.com/superz97/go-aggregator/cmd/gator@latest
 ```
 
 This places a `gator` binary in your `$GOPATH/bin` (or `$HOME/go/bin` by default) — make sure that's on your `$PATH`.
