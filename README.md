@@ -94,4 +94,15 @@ gator likes
 gator unlike https://audiochuck.com
 ```
 
+Browse posts interactively in a terminal UI — scroll the list, view a post's full detail (feed name, date, description), and open it in your browser:
+
+```bash
+gator tui
+```
+
+- `j`/`k` or arrow keys — move the selection
+- `enter` — view full post detail
+- `o` — open the post URL in your default browser
+- `esc`/`q` — back to the list / quit
+
 Other commands: `users`, `feeds`, `follow <url>`, `following`, `unfollow <url>`.
