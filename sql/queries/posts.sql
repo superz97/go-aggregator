@@ -66,3 +66,12 @@ limit $3;
 
 -- name: GetPostByURL :one
 select * from posts where url = $1;
+
+-- name: GetPostsForTUI :many
+select posts.*, feeds.name as feed_name
+from posts
+inner join feed_follows on posts.feed_id = feed_follows.feed_id
+inner join feeds on feed_follows.feed_id = feeds.id
+where feed_follows.user_id = $1
+order by posts.published_at desc nulls last
+limit $2;

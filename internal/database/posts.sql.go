@@ -75,6 +75,66 @@ func (q *Queries) GetPostByURL(ctx context.Context, url string) (Post, error) {
 	return i, err
 }
 
+const getPostsForTUI = `-- name: GetPostsForTUI :many
+select posts.id, posts.created_at, posts.updated_at, posts.title, posts.url, posts.description, posts.published_at, posts.feed_id, feeds.name as feed_name
+from posts
+inner join feed_follows on posts.feed_id = feed_follows.feed_id
+inner join feeds on feed_follows.feed_id = feeds.id
+where feed_follows.user_id = $1
+order by posts.published_at desc nulls last
+limit $2
+`
+
+type GetPostsForTUIParams struct {
+	UserID uuid.UUID
+	Limit  int32
+}
+
+type GetPostsForTUIRow struct {
+	ID          uuid.UUID
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Title       string
+	Url         string
+	Description sql.NullString
+	PublishedAt sql.NullTime
+	FeedID      uuid.UUID
+	FeedName    string
+}
+
+func (q *Queries) GetPostsForTUI(ctx context.Context, arg GetPostsForTUIParams) ([]GetPostsForTUIRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPostsForTUI, arg.UserID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetPostsForTUIRow
+	for rows.Next() {
+		var i GetPostsForTUIRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Title,
+			&i.Url,
+			&i.Description,
+			&i.PublishedAt,
+			&i.FeedID,
+			&i.FeedName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPostsForUser = `-- name: GetPostsForUser :many
 select posts.id, posts.created_at, posts.updated_at, posts.title, posts.url, posts.description, posts.published_at, posts.feed_id
 from posts

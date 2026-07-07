@@ -51,6 +51,7 @@ func main() {
 	cmds.register("like", middlewareLoggedIn(handlerLike))
 	cmds.register("unlike", middlewareLoggedIn(handlerUnlike))
 	cmds.register("likes", middlewareLoggedIn(handlerLikes))
+	cmds.register("tui", middlewareLoggedIn(handlerTUI))
 
 	args := os.Args
 	if len(args) < 2 {
