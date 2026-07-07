@@ -32,6 +32,22 @@ var (
 
 	statusStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("120"))
+
+	frameStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("205")).
+			Padding(0, 1)
+
+	footerAccentStyle = lipgloss.NewStyle().
+				Background(lipgloss.Color("205")).
+				Foreground(lipgloss.Color("0")).
+				Bold(true).
+				Padding(0, 1)
+
+	footerSegmentStyle = lipgloss.NewStyle().
+				Background(lipgloss.Color("236")).
+				Foreground(lipgloss.Color("250")).
+				Padding(0, 1)
 )
 
 type tuiModel struct {
@@ -42,6 +58,8 @@ type tuiModel struct {
 	detail   bool
 	err      error
 	status   string
+	width    int
+	height   int
 }
 
 func newTUIModel(posts []database.GetPostsForTUIRow) tuiModel {
@@ -56,11 +74,25 @@ func (m tuiModel) Init() tea.Cmd {
 }
 
 func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	keyMsg, ok := msg.(tea.KeyMsg)
-	if !ok {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		m.viewport = m.height - 8
+		if m.viewport < 3 {
+			m.viewport = 3
+		}
+		if m.cursor >= m.offset+m.viewport {
+			m.offset = m.cursor - m.viewport + 1
+		}
 		return m, nil
+	case tea.KeyMsg:
+		return m.handleKey(msg)
 	}
+	return m, nil
+}
 
+func (m tuiModel) handleKey(keyMsg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if m.detail {
 		switch keyMsg.String() {
 		case "q", "esc":
@@ -114,6 +146,26 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m tuiModel) contentWidth() int {
+	width := m.width
+	if width <= 0 {
+		width = 60
+	}
+	cw := width - 4
+	if cw < 20 {
+		cw = 20
+	}
+	return cw
+}
+
+func (m tuiModel) footer(accent, help string) string {
+	right := help
+	if m.status != "" {
+		right = help + " " + m.status
+	}
+	return lipgloss.JoinHorizontal(lipgloss.Top, footerAccentStyle.Render(accent), footerSegmentStyle.Render(right))
+}
+
 func (m tuiModel) View() string {
 	if len(m.posts) == 0 {
 		return "No posts found. Follow a feed and run `gator agg` first.\n\nq: quit\n"
@@ -128,8 +180,6 @@ func (m tuiModel) View() string {
 func (m tuiModel) listView() string {
 	var b strings.Builder
 
-	b.WriteString(headerStyle.Render("Posts") + helpStyle.Render("  (enter: view, o: open in browser, q: quit)") + "\n\n")
-
 	end := m.offset + m.viewport
 	if end > len(m.posts) {
 		end = len(m.posts)
@@ -141,14 +191,17 @@ func (m tuiModel) listView() string {
 		if i == m.cursor {
 			line = selectedStyle.Render("> " + post.Title)
 		}
-		fmt.Fprintln(&b, line)
+		b.WriteString(line + "\n")
 	}
 
-	if m.status != "" {
-		fmt.Fprintf(&b, "\n%s\n", statusStyle.Render(m.status))
-	}
+	header := headerStyle.Render("Posts")
+	box := frameStyle.Width(m.contentWidth()).Render(strings.TrimRight(b.String(), "\n"))
+	footer := m.footer(
+		fmt.Sprintf(" POST %d/%d ", m.cursor+1, len(m.posts)),
+		"enter view · o open · q quit",
+	)
 
-	return b.String()
+	return lipgloss.JoinVertical(lipgloss.Left, header, box, footer)
 }
 
 func (m tuiModel) detailView() string {
@@ -164,18 +217,19 @@ func (m tuiModel) detailView() string {
 		description = stripHTML(post.Description.String)
 	}
 
-	var b strings.Builder
-	fmt.Fprintf(&b, "%s\n%s\n\n%s\n\n%s\n\n",
+	content := fmt.Sprintf("%s\n%s\n\n%s\n\n%s",
 		titleStyle.Render(post.Title),
 		metaStyle.Render(post.FeedName+" · "+published),
 		description,
 		post.Url,
 	)
-	b.WriteString(helpStyle.Render("esc/q: back, o: open in browser") + "\n")
 
-	if m.status != "" {
-		fmt.Fprintf(&b, "\n%s\n", m.status)
-	}
+	header := headerStyle.Render("Post detail")
+	box := frameStyle.Width(m.contentWidth()).Render(content)
+	footer := m.footer(
+		fmt.Sprintf(" POST %d/%d ", m.cursor+1, len(m.posts)),
+		"esc/q back · o open",
+	)
 
-	return b.String()
+	return lipgloss.JoinVertical(lipgloss.Left, header, box, footer)
 }
