@@ -63,3 +63,6 @@ where feed_follows.user_id = $1
 and similarity(posts.title, $2) > 0.1
 order by similarity(posts.title, $2) desc
 limit $3;
+
+-- name: GetPostByURL :one
+select * from posts where url = $1;

@@ -82,4 +82,16 @@ gator search --limit=5 "counterclok"
 - `--limit=<n>` — max number of results (default `10`)
 - Flags and the query can appear in any order; an unquoted multi-word query is joined with spaces.
 
+Bookmark or like a post, identified by its URL (shown in `browse`/`search` output):
+
+```bash
+gator bookmark https://audiochuck.com
+gator bookmarks
+gator unbookmark https://audiochuck.com
+
+gator like https://audiochuck.com
+gator likes
+gator unlike https://audiochuck.com
+```
+
 Other commands: `users`, `feeds`, `follow <url>`, `following`, `unfollow <url>`.
